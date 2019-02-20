@@ -1,0 +1,215 @@
+;;;; Othello Board
+;;;; Ganesh S Tulshibagwale
+;;;; boards will be represented as (Player BoardConfig)
+;;;; Player is Black or White, representing whose turn it is
+;;;; BoardConfig is (Row0 Row1 Row2 Row3...), numbered top-bottom
+;;;; the Rows are (Col0 Col1 Col2 Col3...), numbered left-right
+;;;; the Cols are Black, White, or Empty, representing what's in the spaces
+;;;; therefore, the starting position for a 4x4 board is (with abbreviations)
+;;;; (B ((E E E E) (E W B E) (E B W E) (E E E E)))
+
+;;; starting position set
+(setq othello-small-start '(BLACK ((EMPTY EMPTY EMPTY EMPTY) (EMPTY WHITE BLACK EMPTY) (EMPTY BLACK WHITE EMPTY) (EMPTY EMPTY EMPTY EMPTY))))
+;(setq othello-medium-start)
+;(setq othello-large-start)
+
+;;; prints out board
+;(defun othello-print (board)
+;)
+
+;;; returns whose turn it is
+(defun othello-get-whose-turn (board)
+   (first board)
+)
+
+;;; returns whose turn it isn't
+(defun othello-get-whose-not-turn (board)
+   (cond
+      ((eql 'BLACK (first board)) 'WHITE)
+      (T 'BLACK)
+   )
+)
+
+;;; returns contents of a specific space
+(defun othello-get-space (board row col)
+   (cond
+      ((or (< row 0) (< col 0)) nil)
+      (T (othello-get-space-helper-row (first (rest board)) row col))
+   )
+)
+(defun othello-get-space-helper-row (boardconfig row col)
+   (cond
+      ((<= row 0) (othello-get-space-helper-col (first boardconfig) col))
+      (T (othello-get-space-helper-row (rest boardconfig) (- row 1) col))
+   )
+)
+(defun othello-get-space-helper-col (row col)
+   (cond
+      ((<= col 0) (first row))
+      (T (othello-get-space-helper-col (rest row) (- col 1)))
+   )
+)
+
+;;; given a board and coordinates for a move, determines whether the move is legal
+(defun othello-capture-legal (board row col)
+   (cond
+      ((not (eql 'EMPTY (othello-get-space board row col))) nil)
+      ((othello-capture-north-legal board row col) T)
+      ((othello-capture-east-legal board row col) T)
+      ((othello-capture-south-legal board row col) T)
+      ((othello-capture-west-legal board row col) T)
+      ((othello-capture-northeast-legal board row col) T)
+      ((othello-capture-southeast-legal board row col) T)
+      ((othello-capture-southwest-legal board row col) T)
+      ((othello-capture-northwest-legal board row col) T)
+      (T nil)
+   )
+)
+
+(defun othello-capture-north-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (- row 1) col)) (othello-capture-north-legal-helper board (- row 1) col))
+   )
+)
+(defun othello-capture-north-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-north-legal-helper board (- row 1) col))
+   )
+)
+(defun othello-capture-east-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row (+ col 1))) (othello-capture-east-legal-helper board row (+ col 1)))
+   )
+)
+(defun othello-capture-east-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-east-legal-helper board row (+ col 1)))
+   )
+)
+(defun othello-capture-south-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (+ row 1) col)) (othello-capture-south-legal-helper board (+ row 1) col))
+   )
+)
+(defun othello-capture-south-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-south-legal-helper board (+ row 1) col))
+   )
+)
+(defun othello-capture-west-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row (- col 1))) (othello-capture-west-legal-helper board row (- col 1)))
+   )
+)
+(defun othello-capture-west-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-west-legal-helper board row (- col 1)))
+   )
+)
+(defun othello-capture-northeast-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (- row 1) (+ col 1))) (othello-capture-west-legal-helper board (- row 1) (+ col 1)))
+   )
+)
+(defun othello-capture-northeast-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-west-legal-helper board (- row 1) (+ col 1)))
+   )
+)
+(defun othello-capture-southeast-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (+ row 1) (+ col 1))) (othello-capture-west-legal-helper board (+ row 1) (+ col 1)))
+   )
+)
+(defun othello-capture-southeast-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-west-legal-helper board (+ row 1) (+ col 1)))
+   )
+)
+(defun othello-capture-southwest-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (+ row 1) (- col 1))) (othello-capture-west-legal-helper board (+ row 1) (- col 1)))
+   )
+)
+(defun othello-capture-southwest-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-west-legal-helper board (+ row 1) (- col 1)))
+   )
+)
+(defun othello-capture-northwest-legal (board row col)
+   (cond
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (- row 1) (- col 1))) (othello-capture-west-legal-helper board (- row 1) (- col 1)))
+   )
+)
+(defun othello-capture-northwest-legal-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board row col)) T)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board row col)) (othello-capture-west-legal-helper board (- row 1) (- col 1)))
+   )
+)
+
+;;; takes in a board and returns the same board but it's the other player's turn
+(defun othello-flip-turn (board)
+   (cons (othello-get-whose-not-turn board) (rest board))
+)
+
+;;; takes in a board and flips the token at the given coordinates
+;;; white becomes black, black becomes white, empty becomes empty
+;;; returns the changed board
+(defun othello-flip-token (board row col)
+   (cond
+      ((or (< row 0) (< col 0)) board)
+      (T (cons (first board) (othello-flip-token-row-helper (first (rest board)) row col)))
+   )
+)
+(defun othello-flip-token-row-helper (boardconfig row col)
+   (cond
+      ((= row 0) (cons (othello-flip-token-col-helper (first boardconfig) col) (rest boardconfig)))
+      (T (cons (first boardconfig) (othello-flip-token-row-helper (rest boardconfig) (- row 1) col)))
+   )
+)
+(defun othello-flip-token-col-helper (row col)
+   (cond
+      ((= col 0) (cons (othello-flip-token-final (first row)) (rest row)))
+      (T (cons (first row) (othello-flip-token-col-helper (rest row) (- col 1))))
+   )
+)
+(defun othello-flip-token-final (space)
+   (cond
+      ((eql 'EMPTY space) 'EMPTY)
+      ((eql 'BLACK space) 'WHITE)
+      ((eql 'WHITE space) 'BLACK)
+   )
+)
+
+;;;need a function othello-place-token
+
+;;; takes in board and coordinates for move
+;;; returns new board if legal move or nil if illegal move
+;;; these are not finished
+(defun othello-capture (board row col)
+   (cond
+      ((not (eql 'EMPTY (othello-get-space board row col))) nil)
+      ((eql board (othello-capture-north board row col)) nil)
+      (T (othello-flip-turn (othello-capture-north board row col)))
+   )
+)
+(defun othello-capture-north (board row col)
+   (cond
+      ((othello-capture-north-legal board row col) (othello-capture-north-helper board row col))
+      (T (othello-capture-east board row col))
+   )
+)
+(defun othello-capture-north-helper (board row col)
+   (cond
+      ((eql (othello-get-whose-turn board) (othello-get-space board (- row 1) col)) board)
+      ((eql (othello-get-whose-not-turn board) (othello-get-space board (- row 1) col)) (othello-capture-north-helper (othello-flip-token board (- row 1) col) (- row 1) col))
+   )
+)
